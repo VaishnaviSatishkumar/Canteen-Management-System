@@ -1,0 +1,171 @@
+#include<stdio.h>
+#include<string.h>
+
+int admin();
+void print();
+void customer();
+int chk_avail_qty(char name[20],int qty);
+void receipt();
+
+struct CMS
+{
+char item_name[20];
+ int quantity;
+ float item_price;
+}c,bill[10];
+
+//Function to add the menu items
+int admin() 
+{
+  FILE *fp;
+  fp=fopen("canteen.txt","w");
+  printf("\033[0;31m");
+  printf("Enter the item name, quantity and unit price:\n");
+  printf("\033[0;37m");
+  while(1)
+  {	
+    scanf("%s",&c.item_name);
+    if((strcmp(c.item_name,"exit"))==0)
+    break;
+    scanf("%d%f",&c.quantity,&c.item_price);
+    fwrite(&c,sizeof(c),1,fp);
+  }	
+  fclose(fp);
+}
+
+//Funtion to print the menu
+void print()
+{
+  FILE *fp;
+  fp=fopen("canteen.txt","r");
+  printf("\033[0;36m");
+  printf("\e[1m\t\tMENU\e[m\n");
+  printf("NAME\t\tQuantity\tRate\n");
+  printf("\033[0;37m");
+  while(fread(&c,sizeof(c),1,fp))
+  {
+    printf("%s\t\t%d\t\t%.2f\n",c.item_name,c.quantity,c.item_price);
+	}
+  fclose(fp);
+}
+
+//Funtion to get the order from the customer
+void customer()
+{
+  int i,qty[20];
+  char name[20];
+  print();
+  printf("\033[0;31m");
+  printf("\nWhat would you like to have and how much of each item? ");
+  printf("[Max. no. of items is 10] ");
+  printf("\nOnce entered everything you need type 'exit'\n");
+  printf("\033[0;37m");
+  for(i=0;i<10;i++)
+  {
+    scanf("%s",&bill[i].item_name);
+    if((strcmp(bill[i].item_name,"exit"))==0)
+    break;
+    scanf("%d",&bill[i].quantity);
+    if((chk_avail_qty(bill[i].item_name,bill[i].quantity))==0)
+    {
+      printf("\033[0;32m");
+      printf("%s is not available\n",bill[i].item_name);
+      printf(“\033[0;37m”);
+      i--;
+    }
+  }
+  receipt();
+}
+
+//Function to check the availability 
+int chk_avail_qty(char name[20],int qty)
+{
+  FILE *fp;
+  fp=fopen("canteen.txt","r+");
+  while(fread(&c,sizeof(c),1,fp))
+  {
+    if((strcmp(c.item_name,name))==0)
+    {
+      if(qty>c.quantity)
+      {
+	      fclose(fp);
+        return 0;
+			}
+      else
+      {
+        fseek(fp,-1*sizeof(c),1);
+        c.quantity-=qty;
+        fwrite(&c,sizeof(c),1,fp);
+        return 1;
+      }        
+    }
+	}	
+  fclose(fp);
+}
+
+//Function to print the bill
+void receipt()
+{
+  float amount,total=0;
+  int i;
+  printf("\033[0;36m");
+  printf("\t TUMBLOO canteen\n");
+  printf("\tNo:13, BTS street\n");
+  printf("\t    India\n");
+  printf("\tRetail Invoice\n");
+  printf("______________________________________\n");
+  printf("02-12-2022\t\t\tFriday\n");
+  printf("\nItem\t\tQuantity\tAmount");
+  FILE *fp;
+  fp=fopen("canteen.txt","r");
+  printf("\033[0;37m");
+  while(fread(&c,sizeof(c),1,fp))
+  {
+    for(i=0;i<sizeof(bill);i++)
+    {
+      if((strcmp(c.item_name,bill[i].item_name))==0)
+      {
+        amount=bill[i].quantity*c.item_price;
+        printf("\n%s\t\t%d\t\t%.2f",bill[i].item_name,bill[i].quantity,amount);         
+        total+=amount;            			
+      }
+    }
+  }
+  printf("\n\nTotal Bill: Rs.%.2f",total);
+}
+
+int main()
+{
+  int t,r;
+  char ch='y';
+  printf("\033[0;35m");
+  printf("Welcome to tumbloo canteen\n");
+  do
+  {
+    printf("\033[0;36m");
+    printf("Are you an admin or a customer? 0-admin 1-customer\n");      
+    printf("\033[0;37m");
+    scanf("%d",&t);
+    switch(t)
+    {
+    case 0:
+      admin();
+      break;
+    case 1:
+      customer();
+      break;
+     }
+  printf("\033[0;31m");
+  printf("\nDo you wish to continue?[y/n]? ");
+  printf("\033[0;37m");
+  scanf("\n%c",&ch);
+  }while(ch=='y');
+  printf("\033[0;33m");
+  printf("\nHow often can we expect to see you again on a scale of (1-5)");
+  printf("\033[0;37m");
+  scanf("%d",&r);
+  printf("\033[0;35m");
+  printf("Thank you! Visit again");
+  printf("\033[0;37m");
+  return 0;
+}
